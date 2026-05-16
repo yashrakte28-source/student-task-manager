@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-// Generate JWT token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || "7d",
@@ -15,7 +14,6 @@ const register = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
-    // Validate required fields
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -23,7 +21,6 @@ const register = async (req, res) => {
       });
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -32,8 +29,14 @@ const register = async (req, res) => {
       });
     }
 
-    // Create user (password hashed via pre-save hook in model)
     const user = await User.create({ name, email, password });
+
+    // Emit real-time WebSocket event
+    const io = req.app.get("io");
+    io.emit("user:registered", {
+      name: user.name,
+      email: user.email,
+    });
 
     res.status(201).json({
       success: true,
@@ -64,7 +67,6 @@ const login = async (req, res) => {
       });
     }
 
-    // Find user (include password for comparison)
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(401).json({
@@ -73,7 +75,6 @@ const login = async (req, res) => {
       });
     }
 
-    // Check password
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -81,6 +82,13 @@ const login = async (req, res) => {
         message: "Invalid email or password",
       });
     }
+
+    // Emit real-time WebSocket event
+    const io = req.app.get("io");
+    io.emit("user:loggedin", {
+      name: user.name,
+      email: user.email,
+    });
 
     res.status(200).json({
       success: true,

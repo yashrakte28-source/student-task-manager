@@ -5,7 +5,6 @@ const Task = require("../models/Task");
 // @access  Private
 const getTasks = async (req, res) => {
   try {
-    // Support filtering by status or priority via query params
     const filter = { user: req.user._id };
     if (req.query.status) filter.status = req.query.status;
     if (req.query.priority) filter.priority = req.query.priority;
@@ -33,7 +32,6 @@ const getTask = async (req, res) => {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
 
-    // Make sure task belongs to logged-in user
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -71,6 +69,15 @@ const createTask = async (req, res) => {
       status,
     });
 
+    // Emit real-time WebSocket event to ALL connected clients
+    const io = req.app.get("io");
+    io.emit("task:created", {
+      title: task.title,
+      subject: task.subject,
+      priority: task.priority,
+      createdBy: req.user.name,
+    });
+
     res.status(201).json({
       success: true,
       message: "Task created successfully",
@@ -100,8 +107,8 @@ const updateTask = async (req, res) => {
     }
 
     task = await Task.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,          // return updated document
-      runValidators: true, // run schema validators on update
+      new: true,
+      runValidators: true,
     });
 
     res.status(200).json({

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Task Manager</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #0f0f0f; color: #f0f0f0; }
+  .container { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+  h1 { font-size: 28px; color: #00ff88; margin-bottom: 6px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 30px; }
+  .status-bar { background: #1a1a1a; border: 1px solid #222; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #ff4444; flex-shrink: 0; }
+  .dot.connected { background: #00ff88; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .card { background: #1a1a1a; border: 1px solid #222; border-radius: 10px; padding: 20px; }
+  .card h2 { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+  input, select { width: 100%; padding: 10px 12px; background: #111; border: 1px solid #333; border-radius: 6px; color: #f0f0f0; font-size: 13px; margin-bottom: 10px; }
+  button { width: 100%; padding: 10px; background: #00ff88; color: #000; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  button:hover { background: #00cc70; }
+  button.secondary { background: #1a56db; color: #fff; }
+  button.secondary:hover { background: #1444b8; }
+  .msg { font-size: 12px; margin-top: 8px; padding: 8px 12px; border-radius: 6px; display: none; }
+  .msg.success { background: #0d2818; color: #00ff88; display: block; }
+  .msg.error { background: #2d0f0f; color: #ff6b6b; display: block; }
+  .live-feed { background: #1a1a1a; border: 1px solid #222; border-radius: 10px; padding: 20px; }
+  .live-feed h2 { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .live-badge { background: #ff4444; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: 700; animation: pulse 1s infinite; }
+  .feed-list { list-style: none; max-height: 300px; overflow-y: auto; }
+  .feed-item { padding: 12px 14px; border-left: 3px solid #00ff88; background: #111; border-radius: 0 6px 6px 0; margin-bottom: 8px; font-size: 13px; animation: slideIn 0.3s ease; }
+  .feed-item.login { border-left-color: #1a56db; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+  .feed-time { font-size: 10px; color: #555; margin-top: 4px; }
+  .feed-empty { color: #444; font-size: 13px; text-align: center; padding: 30px; }
+  .token-display { font-size: 10px; color: #555; word-break: break-all; margin-top: 6px; background: #111; padding: 6px; border-radius: 4px; display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⚡ Student Task Manager</h1>
+  <p class="subtitle">Full-Stack App · Node.js · Express · MongoDB · JWT · WebSocket (Socket.io)</p>
+
+  <div class="status-bar">
+    <div class="dot" id="dot"></div>
+    <span id="status-text">Connecting to server...</span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Authentication</h2>
+      <input type="text" id="name" placeholder="Full Name (for register)" />
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button class="secondary" onclick="register()">Register</button>
+      <br><br>
+      <button onclick="login()">Login & Get Token</button>
+      <div class="msg" id="auth-msg"></div>
+      <div class="token-display" id="token-display"></div>
+    </div>
+
+    <div class="card">
+      <h2>Create Task</h2>
+      <input type="text" id="task-title" placeholder="Task Title" />
+      <input type="text" id="task-subject" placeholder="Subject" />
+      <select id="task-priority">
+        <option value="low">Low Priority</option>
+        <option value="medium" selected>Medium Priority</option>
+        <option value="high">High Priority</option>
+      </select>
+      <select id="task-status">
+        <option value="pending" selected>Pending</option>
+        <option value="in-progress">In Progress</option>
+        <option value="completed">Completed</option>
+      </select>
+      <button onclick="createTask()">Create Task</button>
+      <div class="msg" id="task-msg"></div>
+    </div>
+  </div>
+
+  <div class="live-feed">
+    <h2>
+      Live Activity Feed
+      <span class="live-badge">LIVE</span>
+    </h2>
+    <ul class="feed-list" id="feed">
+      <li class="feed-empty">Waiting for activity... Login or create a task to see live updates.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  let token = '';
+  const socket = io();
+
+  socket.on('connect', () => {
+    document.getElementById('dot').classList.add('connected');
+    document.getElementById('status-text').textContent = 'Connected to server via WebSocket · Real-time updates active';
+  });
+
+  socket.on('disconnect', () => {
+    document.getElementById('dot').classList.remove('connected');
+    document.getElementById('status-text').textContent = 'Disconnected from server';
+  });
+
+  socket.on('task:created', (data) => {
+    addFeedItem(`New task created: "${data.title}" · Subject: ${data.subject} · Priority: ${data.priority.toUpperCase()}`, 'task');
+  });
+
+  socket.on('user:registered', (data) => {
+    addFeedItem(`New user registered: ${data.name} (${data.email})`, 'login');
+  });
+
+  socket.on('user:loggedin', (data) => {
+    addFeedItem(`User logged in: ${data.name} (${data.email})`, 'login');
+  });
+
+  function addFeedItem(text, type) {
+    const feed = document.getElementById('feed');
+    const empty = feed.querySelector('.feed-empty');
+    if (empty) empty.remove();
+    const li = document.createElement('li');
+    li.className = `feed-item ${type === 'login' ? 'login' : ''}`;
+    const time = new Date().toLocaleTimeString();
+    li.innerHTML = `${text}<div class="feed-time">${time}</div>`;
+    feed.insertBefore(li, feed.firstChild);
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = `msg ${type}`;
+  }
+
+  async function register() {
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      const r = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+      const data = await r.json();
+      if (data.success) {
+        token = data.data.token;
+        showMsg('auth-msg', '✓ Registered successfully! Token saved.', 'success');
+        document.getElementById('token-display').style.display = 'block';
+        document.getElementById('token-display').textContent = 'Token: ' + token.substring(0, 50) + '...';
+      } else {
+        showMsg('auth-msg', '✗ ' + data.message, 'error');
+      }
+    } catch(e) {
+      showMsg('auth-msg', '✗ Server error', 'error');
+    }
+  }
+
+  async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      const r = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await r.json();
+      if (data.success) {
+        token = data.data.token;
+        showMsg('auth-msg', '✓ Login successful! Token saved.', 'success');
+        document.getElementById('token-display').style.display = 'block';
+        document.getElementById('token-display').textContent = 'Token: ' + token.substring(0, 50) + '...';
+      } else {
+        showMsg('auth-msg', '✗ ' + data.message, 'error');
+      }
+    } catch(e) {
+      showMsg('auth-msg', '✗ Server error', 'error');
+    }
+  }
+
+  async function createTask() {
+    if (!token) { showMsg('task-msg', '✗ Login first!', 'error'); return; }
+    const title = document.getElementById('task-title').value;
+    const subject = document.getElementById('task-subject').value;
+    const priority = document.getElementById('task-priority').value;
+    const status = document.getElementById('task-status').value;
+    try {
+      const r = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ title, subject, priority, status })
+      });
+      const data = await r.json();
+      if (data.success) {
+        showMsg('task-msg', '✓ Task created! Check live feed.', 'success');
+        document.getElementById('task-title').value = '';
+      } else {
+        showMsg('task-msg', '✗ ' + data.message, 'error');
+      }
+    } catch(e) {
+      showMsg('task-msg', '✗ Server error', 'error');
+    }
+  }
+</script>
+</body>
+</html>
