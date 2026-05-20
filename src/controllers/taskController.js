@@ -1,153 +1,148 @@
 const Task = require("../models/Task");
 
-// @desc    Get all tasks for logged-in user
+// @desc    Get all tasks for logged in user
 // @route   GET /api/tasks
 // @access  Private
-const getTasks = async (req, res) => {
+exports.getTasks = async (req, res) => {
   try {
-    const filter = { user: req.user._id };
-    if (req.query.status) filter.status = req.query.status;
-    if (req.query.priority) filter.priority = req.query.priority;
-
-    const tasks = await Task.find(filter).sort({ createdAt: -1 });
-
+    const tasks = await Task.find({ user: req.user.id });
     res.status(200).json({
       success: true,
       count: tasks.length,
       data: tasks,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
 // @desc    Get single task
 // @route   GET /api/tasks/:id
 // @access  Private
-const getTask = async (req, res) => {
+exports.getTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
-
     if (!task) {
-      return res.status(404).json({ success: false, message: "Task not found" });
-    }
-
-    if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
+      return res.status(404).json({
         success: false,
-        message: "Not authorized to access this task",
+        message: "Task not found",
       });
     }
-
-    res.status(200).json({ success: true, data: task });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc    Create a task
-// @route   POST /api/tasks
-// @access  Private
-const createTask = async (req, res) => {
-  try {
-    const { title, description, subject, dueDate, priority, status } = req.body;
-
-    if (!title) {
-      return res.status(400).json({
+    if (task.user.toString() !== req.user.id && req.user.role !== "admin") {
+      return res.status(401).json({
         success: false,
-        message: "Task title is required",
+        message: "Not authorized",
       });
     }
-
-    const task = await Task.create({
-      user: req.user._id,
-      title,
-      description,
-      subject,
-      dueDate,
-      priority,
-      status,
-    });
-
-    // Emit real-time WebSocket event to ALL connected clients
-    const io = req.app.get("io");
-    io.emit("task:created", {
-      title: task.title,
-      subject: task.subject,
-      priority: task.priority,
-      createdBy: req.user.name,
-    });
-
-    res.status(201).json({
+    res.status(200).json({
       success: true,
-      message: "Task created successfully",
       data: task,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-// @desc    Update a task
-// @route   PUT /api/tasks/:id
+// @desc    Create new task
+// @route   POST /api/tasks
 // @access  Private
-const updateTask = async (req, res) => {
+exports.createTask = async (req, res) => {
   try {
-    let task = await Task.findById(req.params.id);
+    req.body.user = req.user.id;
+    const task = await Task.create(req.body);
 
-    if (!task) {
-      return res.status(404).json({ success: false, message: "Task not found" });
-    }
-
-    if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update this task",
+    // Safe socket emit - only if io exists
+    if (req.app && req.app.get("io")) {
+      const io = req.app.get("io");
+      io.emit("taskCreated", {
+        message: "New task created",
+        task: {
+          title: task.title,
+          status: task.status,
+          user: req.user.name || req.user.id,
+        },
       });
     }
 
+    res.status(201).json({
+      success: true,
+      data: task,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Update task
+// @route   PUT /api/tasks/:id
+// @access  Private
+exports.updateTask = async (req, res) => {
+  try {
+    let task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
+    }
+    if (task.user.toString() !== req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized",
+      });
+    }
     task = await Task.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
-
     res.status(200).json({
       success: true,
-      message: "Task updated successfully",
       data: task,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-// @desc    Delete a task
+// @desc    Delete task
 // @route   DELETE /api/tasks/:id
 // @access  Private
-const deleteTask = async (req, res) => {
+exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
-
     if (!task) {
-      return res.status(404).json({ success: false, message: "Task not found" });
-    }
-
-    if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
+      return res.status(404).json({
         success: false,
-        message: "Not authorized to delete this task",
+        message: "Task not found",
       });
     }
-
+    if (task.user.toString() !== req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized",
+      });
+    }
     await task.deleteOne();
-
     res.status(200).json({
       success: true,
-      message: "Task deleted successfully",
+      data: {},
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
-
-module.exports = { getTasks, getTask, createTask, updateTask, deleteTask };
