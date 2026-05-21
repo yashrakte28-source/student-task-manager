@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Task Manager</title>
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #0f0f0f; color: #f0f0f0; }
@@ -40,7 +40,7 @@
 </head>
 <body>
 <div class="container">
-  <h1>⚡ Student Task Manager</h1>
+  <h1>Student Task Manager</h1>
   <p class="subtitle">Full-Stack App · Node.js · Express · MongoDB · JWT · WebSocket (Socket.io)</p>
 
   <div class="status-bar">
@@ -106,15 +106,15 @@
   });
 
   socket.on('task:created', (data) => {
-    addFeedItem(`New task created: "${data.title}" · Subject: ${data.subject} · Priority: ${data.priority.toUpperCase()}`, 'task');
+    addFeedItem('New task created: "' + data.title + '" · Subject: ' + data.subject + ' · Priority: ' + data.priority.toUpperCase(), 'task');
   });
 
   socket.on('user:registered', (data) => {
-    addFeedItem(`New user registered: ${data.name} (${data.email})`, 'login');
+    addFeedItem('New user registered: ' + data.name + ' (' + data.email + ')', 'login');
   });
 
   socket.on('user:loggedin', (data) => {
-    addFeedItem(`User logged in: ${data.name} (${data.email})`, 'login');
+    addFeedItem('User logged in: ' + data.name + ' (' + data.email + ')', 'login');
   });
 
   function addFeedItem(text, type) {
@@ -122,16 +122,16 @@
     const empty = feed.querySelector('.feed-empty');
     if (empty) empty.remove();
     const li = document.createElement('li');
-    li.className = `feed-item ${type === 'login' ? 'login' : ''}`;
+    li.className = 'feed-item ' + (type === 'login' ? 'login' : '');
     const time = new Date().toLocaleTimeString();
-    li.innerHTML = `${text}<div class="feed-time">${time}</div>`;
+    li.innerHTML = text + '<div class="feed-time">' + time + '</div>';
     feed.insertBefore(li, feed.firstChild);
   }
 
   function showMsg(id, text, type) {
     const el = document.getElementById(id);
     el.textContent = text;
-    el.className = `msg ${type}`;
+    el.className = 'msg ' + type;
   }
 
   async function register() {
@@ -147,14 +147,14 @@
       const data = await r.json();
       if (data.success) {
         token = data.data.token;
-        showMsg('auth-msg', '✓ Registered successfully! Token saved.', 'success');
+        showMsg('auth-msg', 'Registered successfully! Token saved.', 'success');
         document.getElementById('token-display').style.display = 'block';
         document.getElementById('token-display').textContent = 'Token: ' + token.substring(0, 50) + '...';
       } else {
-        showMsg('auth-msg', '✗ ' + data.message, 'error');
+        showMsg('auth-msg', data.message, 'error');
       }
     } catch(e) {
-      showMsg('auth-msg', '✗ Server error', 'error');
+      showMsg('auth-msg', 'Server error', 'error');
     }
   }
 
@@ -170,19 +170,19 @@
       const data = await r.json();
       if (data.success) {
         token = data.data.token;
-        showMsg('auth-msg', '✓ Login successful! Token saved.', 'success');
+        showMsg('auth-msg', 'Login successful! Token saved.', 'success');
         document.getElementById('token-display').style.display = 'block';
         document.getElementById('token-display').textContent = 'Token: ' + token.substring(0, 50) + '...';
       } else {
-        showMsg('auth-msg', '✗ ' + data.message, 'error');
+        showMsg('auth-msg', data.message, 'error');
       }
     } catch(e) {
-      showMsg('auth-msg', '✗ Server error', 'error');
+      showMsg('auth-msg', 'Server error', 'error');
     }
   }
 
   async function createTask() {
-    if (!token) { showMsg('task-msg', '✗ Login first!', 'error'); return; }
+    if (!token) { showMsg('task-msg', 'Login first!', 'error'); return; }
     const title = document.getElementById('task-title').value;
     const subject = document.getElementById('task-subject').value;
     const priority = document.getElementById('task-priority').value;
@@ -195,13 +195,13 @@
       });
       const data = await r.json();
       if (data.success) {
-        showMsg('task-msg', '✓ Task created! Check live feed.', 'success');
+        showMsg('task-msg', 'Task created! Check live feed.', 'success');
         document.getElementById('task-title').value = '';
       } else {
-        showMsg('task-msg', '✗ ' + data.message, 'error');
+        showMsg('task-msg', data.message, 'error');
       }
     } catch(e) {
-      showMsg('task-msg', '✗ Server error', 'error');
+      showMsg('task-msg', 'Server error', 'error');
     }
   }
 </script>
