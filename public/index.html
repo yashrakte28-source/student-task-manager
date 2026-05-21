@@ -8,7 +8,7 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #0f0f0f; color: #f0f0f0; }
-  .container { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+  .container { max-width: 960px; margin: 0 auto; padding: 30px 20px; }
   h1 { font-size: 28px; color: #00ff88; margin-bottom: 6px; }
   .subtitle { color: #888; font-size: 13px; margin-bottom: 30px; }
   .status-bar { background: #1a1a1a; border: 1px solid #222; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
@@ -19,23 +19,46 @@
   .card { background: #1a1a1a; border: 1px solid #222; border-radius: 10px; padding: 20px; }
   .card h2 { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
   input, select { width: 100%; padding: 10px 12px; background: #111; border: 1px solid #333; border-radius: 6px; color: #f0f0f0; font-size: 13px; margin-bottom: 10px; }
-  button { width: 100%; padding: 10px; background: #00ff88; color: #000; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  button { width: 100%; padding: 10px; background: #00ff88; color: #000; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 8px; }
   button:hover { background: #00cc70; }
   button.secondary { background: #1a56db; color: #fff; }
   button.secondary:hover { background: #1444b8; }
+  button.danger { background: #cc2222; color: #fff; }
+  button.danger:hover { background: #aa1111; }
   .msg { font-size: 12px; margin-top: 8px; padding: 8px 12px; border-radius: 6px; display: none; }
   .msg.success { background: #0d2818; color: #00ff88; display: block; }
   .msg.error { background: #2d0f0f; color: #ff6b6b; display: block; }
-  .live-feed { background: #1a1a1a; border: 1px solid #222; border-radius: 10px; padding: 20px; }
+  .live-feed { background: #1a1a1a; border: 1px solid #222; border-radius: 10px; padding: 20px; margin-bottom: 24px; }
   .live-feed h2 { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
   .live-badge { background: #ff4444; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: 700; animation: pulse 1s infinite; }
-  .feed-list { list-style: none; max-height: 300px; overflow-y: auto; }
-  .feed-item { padding: 12px 14px; border-left: 3px solid #00ff88; background: #111; border-radius: 0 6px 6px 0; margin-bottom: 8px; font-size: 13px; animation: slideIn 0.3s ease; }
+  .feed-list { list-style: none; max-height: 200px; overflow-y: auto; }
+  .feed-item { padding: 10px 14px; border-left: 3px solid #00ff88; background: #111; border-radius: 0 6px 6px 0; margin-bottom: 8px; font-size: 13px; animation: slideIn 0.3s ease; }
   .feed-item.login { border-left-color: #1a56db; }
   @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
   .feed-time { font-size: 10px; color: #555; margin-top: 4px; }
-  .feed-empty { color: #444; font-size: 13px; text-align: center; padding: 30px; }
+  .feed-empty { color: #444; font-size: 13px; text-align: center; padding: 20px; }
   .token-display { font-size: 10px; color: #555; word-break: break-all; margin-top: 6px; background: #111; padding: 6px; border-radius: 4px; display: none; }
+  .tasks-section { background: #1a1a1a; border: 1px solid #222; border-radius: 10px; padding: 20px; margin-bottom: 24px; }
+  .tasks-section h2 { font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .tasks-section h2 button { width: auto; padding: 4px 12px; font-size: 11px; margin: 0; }
+  .task-list { list-style: none; }
+  .task-item { padding: 12px 14px; background: #111; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #333; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .task-item.high { border-left-color: #ff4444; }
+  .task-item.medium { border-left-color: #ffaa00; }
+  .task-item.low { border-left-color: #00ff88; }
+  .task-info { flex: 1; }
+  .task-title-text { font-size: 14px; font-weight: 700; color: #f0f0f0; margin-bottom: 4px; }
+  .task-meta { font-size: 11px; color: #666; }
+  .task-badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+  .badge.priority-high { background: #2d0f0f; color: #ff6b6b; }
+  .badge.priority-medium { background: #2d1f00; color: #ffaa00; }
+  .badge.priority-low { background: #0d2818; color: #00ff88; }
+  .badge.status { background: #1a1a2e; color: #1a56db; }
+  .task-delete { background: transparent; border: 1px solid #333; color: #ff4444; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; width: auto; margin: 0; flex-shrink: 0; }
+  .task-delete:hover { background: #2d0f0f; }
+  .no-tasks { color: #444; font-size: 13px; text-align: center; padding: 20px; }
+  .user-info { background: #0d2818; border: 1px solid #00ff8833; border-radius: 6px; padding: 10px 14px; margin-top: 8px; font-size: 12px; color: #00ff88; display: none; }
 </style>
 </head>
 <body>
@@ -49,18 +72,20 @@
   </div>
 
   <div class="grid">
+    <!-- AUTH CARD -->
     <div class="card">
       <h2>Authentication</h2>
       <input type="text" id="name" placeholder="Full Name (for register)" />
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
       <button class="secondary" onclick="register()">Register</button>
-      <br><br>
       <button onclick="login()">Login & Get Token</button>
       <div class="msg" id="auth-msg"></div>
+      <div class="user-info" id="user-info"></div>
       <div class="token-display" id="token-display"></div>
     </div>
 
+    <!-- CREATE TASK CARD -->
     <div class="card">
       <h2>Create Task</h2>
       <input type="text" id="task-title" placeholder="Task Title" />
@@ -80,24 +105,41 @@
     </div>
   </div>
 
+  <!-- MY TASKS -->
+  <div class="tasks-section">
+    <h2>
+      My Tasks
+      <button class="secondary" onclick="loadTasks()" style="width:auto;padding:4px 12px;font-size:11px;margin:0;">Refresh</button>
+    </h2>
+    <ul class="task-list" id="task-list">
+      <li class="no-tasks">Login to see your tasks.</li>
+    </ul>
+  </div>
+
+  <!-- LIVE FEED -->
   <div class="live-feed">
     <h2>
       Live Activity Feed
       <span class="live-badge">LIVE</span>
     </h2>
     <ul class="feed-list" id="feed">
-      <li class="feed-empty">Waiting for activity... Login or create a task to see live updates.</li>
+      <li class="feed-empty">Waiting for activity...</li>
     </ul>
   </div>
 </div>
 
 <script>
   let token = '';
-  const socket = io();
+  let currentUser = null;
+
+  const socket = io({
+    transports: ['websocket', 'polling']
+  });
 
   socket.on('connect', () => {
     document.getElementById('dot').classList.add('connected');
     document.getElementById('status-text').textContent = 'Connected to server via WebSocket · Real-time updates active';
+    addFeedItem('Connected to server successfully', 'login');
   });
 
   socket.on('disconnect', () => {
@@ -106,15 +148,16 @@
   });
 
   socket.on('task:created', (data) => {
-    addFeedItem('New task created: "' + data.title + '" · Subject: ' + data.subject + ' · Priority: ' + data.priority.toUpperCase(), 'task');
+    addFeedItem('New task: "' + data.title + '" · ' + (data.subject || '') + ' · ' + data.priority.toUpperCase(), 'task');
+    if (token) loadTasks();
   });
 
   socket.on('user:registered', (data) => {
-    addFeedItem('New user registered: ' + data.name + ' (' + data.email + ')', 'login');
+    addFeedItem('New user registered: ' + data.name, 'login');
   });
 
   socket.on('user:loggedin', (data) => {
-    addFeedItem('User logged in: ' + data.name + ' (' + data.email + ')', 'login');
+    addFeedItem('User logged in: ' + data.name, 'login');
   });
 
   function addFeedItem(text, type) {
@@ -138,6 +181,7 @@
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    if (!name || !email || !password) { showMsg('auth-msg', 'Please fill all fields', 'error'); return; }
     try {
       const r = await fetch('/api/auth/register', {
         method: 'POST',
@@ -147,9 +191,10 @@
       const data = await r.json();
       if (data.success) {
         token = data.data.token;
-        showMsg('auth-msg', 'Registered successfully! Token saved.', 'success');
-        document.getElementById('token-display').style.display = 'block';
-        document.getElementById('token-display').textContent = 'Token: ' + token.substring(0, 50) + '...';
+        currentUser = data.data;
+        showMsg('auth-msg', 'Registered successfully!', 'success');
+        showUserInfo(data.data);
+        loadTasks();
       } else {
         showMsg('auth-msg', data.message, 'error');
       }
@@ -161,6 +206,7 @@
   async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    if (!email || !password) { showMsg('auth-msg', 'Please fill email and password', 'error'); return; }
     try {
       const r = await fetch('/api/auth/login', {
         method: 'POST',
@@ -170,9 +216,10 @@
       const data = await r.json();
       if (data.success) {
         token = data.data.token;
-        showMsg('auth-msg', 'Login successful! Token saved.', 'success');
-        document.getElementById('token-display').style.display = 'block';
-        document.getElementById('token-display').textContent = 'Token: ' + token.substring(0, 50) + '...';
+        currentUser = data.data;
+        showMsg('auth-msg', 'Login successful!', 'success');
+        showUserInfo(data.data);
+        loadTasks();
       } else {
         showMsg('auth-msg', data.message, 'error');
       }
@@ -181,12 +228,21 @@
     }
   }
 
+  function showUserInfo(user) {
+    const el = document.getElementById('user-info');
+    el.style.display = 'block';
+    el.textContent = 'Logged in as: ' + user.name + ' (' + user.role + ')';
+    document.getElementById('token-display').style.display = 'block';
+    document.getElementById('token-display').textContent = 'Token: ' + token.substring(0, 40) + '...';
+  }
+
   async function createTask() {
     if (!token) { showMsg('task-msg', 'Login first!', 'error'); return; }
     const title = document.getElementById('task-title').value;
     const subject = document.getElementById('task-subject').value;
     const priority = document.getElementById('task-priority').value;
     const status = document.getElementById('task-status').value;
+    if (!title) { showMsg('task-msg', 'Task title is required', 'error'); return; }
     try {
       const r = await fetch('/api/tasks', {
         method: 'POST',
@@ -195,13 +251,63 @@
       });
       const data = await r.json();
       if (data.success) {
-        showMsg('task-msg', 'Task created! Check live feed.', 'success');
+        showMsg('task-msg', 'Task created successfully!', 'success');
         document.getElementById('task-title').value = '';
+        document.getElementById('task-subject').value = '';
+        loadTasks();
       } else {
         showMsg('task-msg', data.message, 'error');
       }
     } catch(e) {
       showMsg('task-msg', 'Server error', 'error');
+    }
+  }
+
+  async function loadTasks() {
+    if (!token) return;
+    try {
+      const r = await fetch('/api/tasks', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const data = await r.json();
+      const list = document.getElementById('task-list');
+      if (data.success && data.data.length > 0) {
+        list.innerHTML = '';
+        data.data.forEach(task => {
+          const li = document.createElement('li');
+          li.className = 'task-item ' + task.priority;
+          li.innerHTML = `
+            <div class="task-info">
+              <div class="task-title-text">${task.title}</div>
+              <div class="task-meta">${task.subject || 'No subject'}</div>
+              <div class="task-badges">
+                <span class="badge priority-${task.priority}">${task.priority.toUpperCase()}</span>
+                <span class="badge status">${task.status}</span>
+              </div>
+            </div>
+            <button class="task-delete" onclick="deleteTask('${task._id}')">Delete</button>
+          `;
+          list.appendChild(li);
+        });
+      } else {
+        list.innerHTML = '<li class="no-tasks">No tasks yet. Create your first task!</li>';
+      }
+    } catch(e) {
+      console.error('Error loading tasks:', e);
+    }
+  }
+
+  async function deleteTask(id) {
+    if (!token) return;
+    try {
+      const r = await fetch('/api/tasks/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const data = await r.json();
+      if (data.success) loadTasks();
+    } catch(e) {
+      console.error('Error deleting task:', e);
     }
   }
 </script>
